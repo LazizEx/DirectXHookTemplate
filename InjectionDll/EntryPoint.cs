@@ -1,4 +1,6 @@
-﻿using InjectionDll.Interface;
+﻿using EasyHook;
+using InjectionDll.DxHook;
+using InjectionDll.Interface;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,10 +14,12 @@ namespace InjectionDll
 {
     public class EntryPoint : EasyHook.IEntryPoint
     {
+        List<IDXHook> _directXHooks = new List<IDXHook>();
         private InterfaceDll _interface;
         ClientCaptureInterfaceEventProxy _clientEventProxy = new ClientCaptureInterfaceEventProxy();
         IpcServerChannel _clientServerChannel = null;
         private System.Threading.ManualResetEvent _runWait;
+        IDXHook _directXHook = null;
 
         public EntryPoint(EasyHook.RemoteHooking.IContext context, String channelName, ConfigDll config)
         {
@@ -108,6 +112,122 @@ namespace InjectionDll
             
         }
 
+        private bool InitialiseDirectXHook(ConfigDll config)
+        {
+            Direct3DVersion version = config.Direct3DVersion;
+            List<Direct3DVersion> loadedVersions = new List<Direct3DVersion>();
+
+            bool isX64Process = EasyHook.RemoteHooking.IsX64Process(EasyHook.RemoteHooking.GetCurrentProcessId());
+            _interface.Message(string.Format("Remote process is a {0}-bit process.", isX64Process ? "64" : "32"));
+
+            try
+            {
+                if (version == Direct3DVersion.AutoDetect)
+                {
+                    // Attempt to determine the correct version based on loaded module.
+                    // In most cases this will work fine, however it is perfectly ok for an application to use a D3D10 device along with D3D11 devices
+                    // so the version might matched might not be the one you want to use
+                    IntPtr d3D9Loaded = IntPtr.Zero;
+                    IntPtr d3D10Loaded = IntPtr.Zero;
+                    IntPtr d3D10_1Loaded = IntPtr.Zero;
+                    IntPtr d3D11Loaded = IntPtr.Zero;
+                    IntPtr d3D11_1Loaded = IntPtr.Zero;
+
+                    int delayTime = 100;
+                    int retryCount = 0;
+                    while (d3D9Loaded == IntPtr.Zero && d3D10Loaded == IntPtr.Zero && d3D10_1Loaded == IntPtr.Zero && d3D11Loaded == IntPtr.Zero && d3D11_1Loaded == IntPtr.Zero)
+                    {
+                        retryCount++;
+                        d3D9Loaded = NativeAPI.GetModuleHandle("d3d9.dll");
+                        d3D10Loaded = NativeAPI.GetModuleHandle("d3d10.dll");
+                        d3D10_1Loaded = NativeAPI.GetModuleHandle("d3d10_1.dll");
+                        d3D11Loaded = NativeAPI.GetModuleHandle("d3d11.dll");
+                        d3D11_1Loaded = NativeAPI.GetModuleHandle("d3d11_1.dll");
+                        System.Threading.Thread.Sleep(delayTime);
+
+                        if (retryCount * delayTime > 5000)
+                        {
+                            _interface.Message("Unsupported Direct3D version, or Direct3D DLL not loaded within 5 seconds.");
+                            return false;
+                        }
+                    }
+
+                    version = Direct3DVersion.Unknown;
+                    if (d3D11_1Loaded != IntPtr.Zero)
+                    {
+                        _interface.Message("Autodetect found Direct3D 11.1");
+                        version = Direct3DVersion.Direct3D11_1;
+                        loadedVersions.Add(version);
+                    }
+                    if (d3D11Loaded != IntPtr.Zero)
+                    {
+                        _interface.Message("Autodetect found Direct3D 11");
+                        version = Direct3DVersion.Direct3D11;
+                        loadedVersions.Add(version);
+                    }
+                    if (d3D10_1Loaded != IntPtr.Zero)
+                    {
+                        _interface.Message("Autodetect found Direct3D 10.1");
+                        version = Direct3DVersion.Direct3D10_1;
+                        loadedVersions.Add(version);
+                    }
+                    if (d3D10Loaded != IntPtr.Zero)
+                    {
+                        _interface.Message("Autodetect found Direct3D 10");
+                        version = Direct3DVersion.Direct3D10;
+                        loadedVersions.Add(version);
+                    }
+                    if (d3D9Loaded != IntPtr.Zero)
+                    {
+                        _interface.Message("Autodetect found Direct3D 9");
+                        version = Direct3DVersion.Direct3D9;
+                        loadedVersions.Add(version);
+                    }
+                }
+
+                foreach (var dxVersion in loadedVersions)
+                {
+                    version = dxVersion;
+                    switch (version)
+                    {
+                        case Direct3DVersion.Direct3D9:
+                            _directXHook = new DXHookD3D9(_interface);
+                            break;
+                        case Direct3DVersion.Direct3D10:
+                            _directXHook = new DXHookD3D10(_interface);
+                            break;
+                        case Direct3DVersion.Direct3D10_1:
+                            _directXHook = new DXHookD3D10_1(_interface);
+                            break;
+                        case Direct3DVersion.Direct3D11:
+                            _directXHook = new DXHookD3D11(_interface);
+                            break;
+                        //case Direct3DVersion.Direct3D11_1:
+                        //    _directXHook = new DXHookD3D11_1(_interface);
+                        //    return;
+                        default:
+                            _interface.Message(string.Format("Unsupported Direct3D version: {0}", version));
+                            return false;
+                    }
+
+                    _directXHook.Config = config;
+                    _directXHook.Hook();
+
+                    _directXHooks.Add(_directXHook);
+                }
+
+                return true;
+
+            }
+            catch (Exception e)
+            {
+                // Notify the host/server application about this error
+                _interface.Message(string.Format("Error in InitialiseHook: {0}", e.ToString()));
+                return false;
+            }
+        }
+
+        #region Check Host Is Alive
         Task _checkAlive;
         long _stopCheckAlive = 0;
         /// <summary>
@@ -144,5 +264,6 @@ namespace InjectionDll
         {
             System.Threading.Interlocked.Increment(ref _stopCheckAlive);
         }
+        #endregion
     }
 }

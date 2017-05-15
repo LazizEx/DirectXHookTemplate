@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -45,6 +46,9 @@
     <Reference Include="SharpDX.D3DCompiler, Version=3.1.1.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.D3DCompiler.3.1.1\lib\net45\SharpDX.D3DCompiler.dll</HintPath>
     </Reference>
+    <Reference Include="SharpDX.Desktop, Version=3.1.1.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.Desktop.3.1.1\lib\net45\SharpDX.Desktop.dll</HintPath>
+    </Reference>
     <Reference Include="SharpDX.Direct3D10, Version=3.1.1.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.Direct3D10.3.1.1\lib\net45\SharpDX.Direct3D10.dll</HintPath>
     </Reference>
@@ -63,9 +67,14 @@
     <Reference Include="SharpDX.DXGI, Version=3.1.1.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
       <HintPath>..\packages\SharpDX.DXGI.3.1.1\lib\net45\SharpDX.DXGI.dll</HintPath>
     </Reference>
+    <Reference Include="SharpDX.Mathematics, Version=3.1.1.0, Culture=neutral, PublicKeyToken=b4dcf0f35e5521f1, processorArchitecture=MSIL">
+      <HintPath>..\packages\SharpDX.Mathematics.3.1.1\lib\net45\SharpDX.Mathematics.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Remoting" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -74,8 +83,29 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DxHook\BaseDXHook.cs" />
+    <Compile Include="DxHook\Common\Element.cs" />
+    <Compile Include="DxHook\Common\FramesPerSecond.cs" />
+    <Compile Include="DxHook\Common\ImageElement.cs" />
+    <Compile Include="DxHook\Common\IOverlay.cs" />
+    <Compile Include="DxHook\Common\IOverlayElement.cs" />
+    <Compile Include="DxHook\Common\Overlay.cs" />
+    <Compile Include="DxHook\Common\TextElement.cs" />
+    <Compile Include="DxHook\D3D9.cs" />
+    <Compile Include="DxHook\DX11\DXFont.cs" />
+    <Compile Include="DxHook\DX11\DXOverlayEngine.cs" />
+    <Compile Include="DxHook\DX11\DXSprite.cs" />
+    <Compile Include="DxHook\DXGI.cs" />
+    <Compile Include="DxHook\DXHookD3D10.cs" />
+    <Compile Include="DxHook\DXHookD3D10_1.cs" />
+    <Compile Include="DxHook\DXHookD3D11.cs" />
+    <Compile Include="DxHook\DXHookD3D9.cs" />
+    <Compile Include="DxHook\FramesPerSecond.cs" />
+    <Compile Include="DxHook\IDXHook.cs" />
+    <Compile Include="DxHook\TextDisplay.cs" />
     <Compile Include="EntryPoint.cs" />
     <Compile Include="Interface\ConfigDll.cs" />
+    <Compile Include="Interface\DisplayTextEventArgs.cs" />
     <Compile Include="Interface\InterfaceDll.cs" />
     <Compile Include="MainClass.cs" />
     <Compile Include="NativeMethods.cs" />
