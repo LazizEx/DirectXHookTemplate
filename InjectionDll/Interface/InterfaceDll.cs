@@ -54,7 +54,7 @@ namespace InjectionDll.Interface
 
         public void Ping()
         {
-            Message("pinging");
+            //Message("pinging");
         }
 
         public void Disconnect()

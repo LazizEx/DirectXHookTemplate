@@ -73,19 +73,19 @@ namespace InjectionDll.DxHook.DX11
 
                 if (DeferredContext)
                 {
-                    //_deviceContext.Rasterizer.SetViewports(new ViewportF(0, 0, _renderTarget.Description.Width, _renderTarget.Description.Height, 0, 1));
-                    _deviceContext.Rasterizer.SetViewports(new SharpDX.Mathematics.Interop.RawViewportF[]
-                    {
-                        new SharpDX.Mathematics.Interop.RawViewportF()
-                        {
-                            X = 0,
-                            Y = 0,
-                            Width = _renderTarget.Description.Width,
-                            Height = _renderTarget.Description.Height,
-                            MinDepth = 0,
-                            MaxDepth = 1
-                        }
-                    });
+                    _deviceContext.Rasterizer.SetViewport(new ViewportF(0, 0, _renderTarget.Description.Width, _renderTarget.Description.Height, 0, 1));
+                    //_deviceContext.Rasterizer.SetViewports(new SharpDX.Mathematics.Interop.RawViewportF[]
+                    //{
+                    //    new SharpDX.Mathematics.Interop.RawViewportF()
+                    //    {
+                    //        X = 0,
+                    //        Y = 0,
+                    //        Width = _renderTarget.Description.Width,
+                    //        Height = _renderTarget.Description.Height,
+                    //        MinDepth = 0,
+                    //        MaxDepth = 1
+                    //    }
+                    //});
 
                     _deviceContext.OutputMerger.SetTargets(_renderTargetView);
                 }
@@ -131,19 +131,19 @@ namespace InjectionDll.DxHook.DX11
         {
             if (!DeferredContext)
             {
-                //_deviceContext.Rasterizer.SetViewports(new ViewportF(0, 0, _renderTarget.Description.Width, _renderTarget.Description.Height, 0, 1));
-                _deviceContext.Rasterizer.SetViewports(new SharpDX.Mathematics.Interop.RawViewportF[] 
-                {
-                    new SharpDX.Mathematics.Interop.RawViewportF()
-                    {
-                        X = 0,
-                        Y = 0,
-                        Width = _renderTarget.Description.Width,
-                        Height = _renderTarget.Description.Height,
-                        MinDepth = 0,
-                        MaxDepth = 1
-                    }
-                });
+                _deviceContext.Rasterizer.SetViewport(new ViewportF(0, 0, _renderTarget.Description.Width, _renderTarget.Description.Height, 0, 1));
+                //_deviceContext.Rasterizer.SetViewports(new SharpDX.Mathematics.Interop.RawViewportF[]
+                //{
+                //    new SharpDX.Mathematics.Interop.RawViewportF()
+                //    {
+                //        X = 0,
+                //        Y = 0,
+                //        Width = _renderTarget.Description.Width,
+                //        Height = _renderTarget.Description.Height,
+                //        MinDepth = 0,
+                //        MaxDepth = 1
+                //    }
+                //});
 
                 _deviceContext.OutputMerger.SetTargets(_renderTargetView);
             }
@@ -169,14 +169,15 @@ namespace InjectionDll.DxHook.DX11
                     {
                         DXFont font = GetFontForTextElement(textElement);
                         if (font != null && !String.IsNullOrEmpty(textElement.Text))
+                        {
                             _spriteEngine.DrawString(textElement.Location.X, textElement.Location.Y, textElement.Text, textElement.Color.R, textElement.Color.G, textElement.Color.B, textElement.Color.A, font);
+                        }
                     }
                     else if (imageElement != null)
                     {
                     }
                 }
             }
-
             End();
         }
 

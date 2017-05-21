@@ -56,7 +56,7 @@ namespace InjectionDll
             //NativeMethods.SendMessage(handle, NativeMethods.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
             // NOTE: This is running in the target process
-            _interface.Message("Injected into process Id: " + EasyHook.RemoteHooking.GetCurrentProcessId().ToString());
+            _interface.Message("Injected into process Id: " + RemoteHooking.GetCurrentProcessId().ToString());
 
             _runWait = new System.Threading.ManualResetEvent(false);
             _runWait.Reset();
@@ -64,7 +64,11 @@ namespace InjectionDll
             try
             {
                 // point to Initialise the Hook
-
+                // Initialise the Hook
+                if (!InitialiseDirectXHook(config))
+                {
+                    return;
+                }
 
                 _interface.Disconnected += _clientEventProxy.DisconnectedProxyHandler;
 

@@ -47,11 +47,28 @@ namespace CheatDxX
         MainClass _InjectProcess;
         private void AttachProcess()
         {
-            string exeName = "notepad";
+            string exeName = "minitri";
             Process[] processes = Process.GetProcessesByName(exeName);
             foreach (Process process in processes)
             {
-                ConfigDll c = new ConfigDll() { };
+                if (process.MainWindowHandle == IntPtr.Zero)
+                {
+                    continue;
+                }
+
+                // Skip if the process is already hooked (and we want to hook multiple applications)
+                //if (HookManager.IsHooked(process.Id))
+                //{
+                //    continue;
+                //}
+
+                Direct3DVersion direct3DVersion = Direct3DVersion.AutoDetect;
+
+                ConfigDll c = new ConfigDll()
+                {
+                    Direct3DVersion = direct3DVersion,
+                    ShowOverlay = true
+                };
 
                 var interfaceDll = new InterfaceDll();
                 interfaceDll.RemoteMessage += InterfaceDll_RemoteMessage;

@@ -25,7 +25,7 @@ namespace InjectionDll.DxHook.DX11
         [StructLayout(LayoutKind.Sequential)]
         internal struct Sprite
         {
-            public Rectangle SrcRect;
+            public SharpDX.Rectangle SrcRect;
             public Rectangle DestRect;
             public Color4 Color;
             public float Z;
@@ -223,7 +223,6 @@ technique11 SpriteTech {
         public void DrawString(int X, int Y, string text, int R, int G, int B, int A, DXFont F)
         {
             Color4 blendFactor = new Color4(1.0f);
-            //Color4 backupBlendFactor;
             SharpDX.Mathematics.Interop.RawColor4 backupBlendFactor;
             int backupMask;
             var backupBlendState = _deviceContext.OutputMerger.GetBlendState(out backupBlendFactor, out backupMask);
@@ -244,8 +243,9 @@ technique11 SpriteTech {
             for (int i = 0; i < length; ++i)
             {
                 char character = text[i];
+                char altSpace = (char)160;
 
-                if (character == ' ')
+                if (character == ' ' || character == altSpace)
                     posX += F.GetSpaceWidth();
                 else if (character == '\n')
                 {
@@ -254,12 +254,13 @@ technique11 SpriteTech {
                 }
                 else
                 {
-                    Rectangle charRect = F.GetCharRect(character);
+                    Rectangle charRect = F.GetCharRect(character, text);
 
                     int width = charRect.Right - charRect.Left;
                     int height = charRect.Bottom - charRect.Top;
 
-                    Draw(new Rectangle(posX, posY, posX + width, posY + height), charRect, color);
+                    //Draw(new Rectangle(posX, posY, posX + width, posY + height), charRect, color);
+                    Draw(new Rectangle() { Left = posX, Top = posY, Right = posX + width, Bottom = posY + height }, charRect, color);
 
                     posX += width + 1;
                 }
@@ -290,7 +291,6 @@ technique11 SpriteTech {
             Debug.Assert(_initialized);
 
             ViewportF[] vp = _deviceContext.Rasterizer.GetViewports<ViewportF>();
-            //var vp = _deviceContext.Rasterizer.GetViewports<ViewportF>();
 
             _screenWidth = vp[0].Width;
             _screenHeight = vp[0].Height;
@@ -362,8 +362,9 @@ technique11 SpriteTech {
             }
 
             _deviceContext.UnmapSubresource(_VB, 0);
-
+            
             _deviceContext.DrawIndexed(spriteCount * 6, 0, 0);
+            
         }
 
         Vector3 PointToNdc(int x, int y, float z)

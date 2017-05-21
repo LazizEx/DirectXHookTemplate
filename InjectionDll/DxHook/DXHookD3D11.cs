@@ -1,7 +1,9 @@
 ﻿using EasyHook;
 using InjectionDll.Interface;
+using SharpDX;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX.Direct3D12;
 using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
@@ -96,7 +98,6 @@ namespace InjectionDll.DxHook
                 #region Get Device and SwapChain method addresses
                 // Create temporary device + swapchain and determine method addresses
                 SharpDX.Direct3D11.Device device;
-                SwapChain swapChain;
                 using (SharpDX.Windows.RenderForm renderForm = new SharpDX.Windows.RenderForm())
                 {
                     this.DebugMessage("Hook: Before device creation");
@@ -105,7 +106,7 @@ namespace InjectionDll.DxHook
                         DeviceCreationFlags.None,
                         DXGI.CreateSwapChainDescription(renderForm.Handle),
                         out device,
-                        out swapChain);
+                        out SwapChain swapChain);
 
                     if (device != null && swapChain != null)
                     {
@@ -224,6 +225,87 @@ namespace InjectionDll.DxHook
             }
         }
 
+        private SharpDX.Direct3D11.Device1 device;
+        private SharpDX.Direct3D11.DeviceContext1 d3dContext;
+        private SharpDX.Direct2D1.DeviceContext d2dContext;
+        //private SwapChain1 swapChain;
+        private SharpDX.Direct2D1.Bitmap1 d2dTarget;
+
+        private SharpDX.Direct2D1.SolidColorBrush solidBrush;
+        private SharpDX.Direct2D1.LinearGradientBrush linearGradientBrush;
+        private SharpDX.Direct2D1.RadialGradientBrush radialGradientBrush;
+
+        bool init = false;
+        void InitText(SwapChain3 tempSwapChain)
+        {
+            init = true;
+            device = tempSwapChain.GetDevice<SharpDX.Direct3D11.Device1>();
+            d3dContext = device.ImmediateContext.QueryInterface<SharpDX.Direct3D11.DeviceContext1>();
+            var texture2d = tempSwapChain.GetBackBuffer<Texture2D>(0);
+            SharpDX.DXGI.Device2 dxgiDevice2 = device.QueryInterface<SharpDX.DXGI.Device2>();
+            SharpDX.DXGI.Adapter dxgiAdapter = dxgiDevice2.Adapter;
+            SharpDX.DXGI.Factory2 dxgiFactory2 = dxgiAdapter.GetParent<SharpDX.DXGI.Factory2>();
+
+            SharpDX.Direct2D1.Device d2dDevice = new SharpDX.Direct2D1.Device(dxgiDevice2);
+            d2dContext = new SharpDX.Direct2D1.DeviceContext(d2dDevice, SharpDX.Direct2D1.DeviceContextOptions.None);
+
+            SharpDX.Direct2D1.BitmapProperties1 properties = new SharpDX.Direct2D1.BitmapProperties1(
+                new SharpDX.Direct2D1.PixelFormat(SharpDX.DXGI.Format.B8G8R8A8_UNorm, 
+                                                    SharpDX.Direct2D1.AlphaMode.Premultiplied),
+                96, 96, SharpDX.Direct2D1.BitmapOptions.Target | SharpDX.Direct2D1.BitmapOptions.CannotDraw);
+
+            Surface backBuffer = tempSwapChain.GetBackBuffer<Surface>(0);
+            d2dTarget = new SharpDX.Direct2D1.Bitmap1(d2dContext, new Size2(800, 600), properties);
+
+            solidBrush = new SharpDX.Direct2D1.SolidColorBrush(d2dContext, Color.Coral);
+
+            // Create a linear gradient brush.
+            // Note that the StartPoint and EndPoint values are set as absolute coordinates of the surface you are drawing to,
+            // NOT the geometry we will apply the brush.
+            linearGradientBrush = new SharpDX.Direct2D1.LinearGradientBrush(d2dContext, new SharpDX.Direct2D1.LinearGradientBrushProperties()
+            {
+                StartPoint = new Vector2(50, 0),
+                EndPoint = new Vector2(450, 0),
+            },
+                new SharpDX.Direct2D1.GradientStopCollection(d2dContext, new SharpDX.Direct2D1.GradientStop[]
+                    {
+                        new SharpDX.Direct2D1.GradientStop()
+                        {
+                            Color = Color.Blue,
+                            Position = 0,
+                        },
+                        new SharpDX.Direct2D1.GradientStop()
+                        {
+                            Color = Color.Green,
+                            Position = 1,
+                        }
+                    }));
+
+            SharpDX.Direct2D1.RadialGradientBrushProperties rgb = new SharpDX.Direct2D1.RadialGradientBrushProperties()
+            {
+                Center = new Vector2(250, 525),
+                RadiusX = 100,
+                RadiusY = 100,
+            };
+            // Create a radial gradient brush.
+            // The center is specified in absolute coordinates, too.
+            radialGradientBrush = new SharpDX.Direct2D1.RadialGradientBrush(d2dContext, ref rgb
+            ,
+                new SharpDX.Direct2D1.GradientStopCollection(d2dContext, new SharpDX.Direct2D1.GradientStop[]
+                {
+                        new SharpDX.Direct2D1.GradientStop()
+                        {
+                            Color = Color.Yellow,
+                            Position = 0,
+                        },
+                        new SharpDX.Direct2D1.GradientStop()
+                        {
+                            Color = Color.Red,
+                            Position = 1,
+                        }
+                }));
+        }
+
         /// <summary>
         /// Our present hook that will grab a copy of the backbuffer when requested. Note: this supports multi-sampling (anti-aliasing)
         /// </summary>
@@ -234,7 +316,12 @@ namespace InjectionDll.DxHook
         int PresentHook(IntPtr swapChainPtr, int syncInterval, SharpDX.DXGI.PresentFlags flags)
         {
             this.Frame();
-            SwapChain swapChain = (SharpDX.DXGI.SwapChain)swapChainPtr;
+            SwapChain3 swapChain = (SharpDX.DXGI.SwapChain3)swapChainPtr;
+            //if (!init)
+            //{
+            //    InitText(swapChain);
+            //}
+
             try
             {
                 #region Screenshot Request
@@ -252,7 +339,7 @@ namespace InjectionDll.DxHook
                 //            regionToCapture = this.Request.RegionToCapture;
                 //        }
                 //        #endregion
-
+                        
                 //        var theTexture = texture;
 
                 //        // If texture is multisampled, then we can use ResolveSubresource to copy it into a non-multisampled texture
@@ -295,7 +382,7 @@ namespace InjectionDll.DxHook
                 //            MipLevels = 1,//texture.Description.MipLevels,
                 //            OptionFlags = texture.Description.OptionFlags
                 //        });
-
+                        
                 //        // Copy the subresource region, we are dealing with a flat 2D texture with no MipMapping, so 0 is the subresource index
                 //        theTexture.Device.ImmediateContext.CopySubresourceRegion(theTexture, 0, new ResourceRegion()
                 //        {
@@ -363,8 +450,8 @@ namespace InjectionDll.DxHook
                         {
                             Elements =
                             {
-                                //new Capture.Hook.Common.TextElement(new System.Drawing.Font("Times New Roman", 22)) { Text = "Test", Location = new System.Drawing.Point(200, 200), Color = System.Drawing.Color.Yellow, AntiAliased = false},
-                                new Common.FramesPerSecond(new System.Drawing.Font("Arial", 16)) { Location = new System.Drawing.Point(5,5), Color = System.Drawing.Color.Red, AntiAliased = true }
+                                new Common.TextElement(new System.Drawing.Font("Times New Roman", 22)) { Text = "Test", Location = new System.Drawing.Point(200, 200), Color = System.Drawing.Color.Yellow, AntiAliased = false},
+                                new Common.FramesPerSecond(new System.Drawing.Font("Arial", 12)) { Location = new System.Drawing.Point(5,5), Color = System.Drawing.Color.Red, AntiAliased = true }
                             }
                         });
                         _overlayEngine.Initialise(swapChain);
@@ -378,6 +465,14 @@ namespace InjectionDll.DxHook
                             overlay.Frame();
                         _overlayEngine.Draw();
                     }
+
+                    //direct2DRenderTarget[frameIndex].BeginDraw();
+                    //int time = Environment.TickCount % 10000;
+                    //int t = time / 2000;
+                    //float f = (time - (t * 2000)) / 2000.0F;
+                    //textBrush.Color = Color4.Lerp(colors[t], colors[t + 1], f);
+                    //direct2DRenderTarget[frameIndex].DrawText("Hello Text", textFormat, new SharpDX.Mathematics.Interop.RawRectangleF((float)Math.Sin(Environment.TickCount / 1000.0F) * 200 + 400, 10, 2000, 500), textBrush);
+                    //direct2DRenderTarget[frameIndex].EndDraw();
                 }
                 #endregion
             }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using SharpDX.Direct3D11;
 using SharpDX;
 using System.Diagnostics;
@@ -92,7 +91,7 @@ namespace InjectionDll.DxHook.DX11
                             }
                         }
                         //System.Drawing.Bitmap bm = new System.Drawing.Bitmap(fontSheetBitmap);
-                        //bm.Save(@"C:\temp\test.png");
+                        //bm.Save(@"D:\temp\test.png");
                     }
                 }
             }
@@ -188,7 +187,9 @@ namespace InjectionDll.DxHook.DX11
                     fontSheetY += (int)(_charHeight) + 1;
                 }
 
-                _charRects[i] = new Rectangle(fontSheetX, fontSheetY, fontSheetX + charWidth, fontSheetY + _charHeight);
+                //_charRects[i] = new Rectangle(fontSheetX, fontSheetY, fontSheetX + charWidth, fontSheetY + _charHeight);
+                _charRects[i] = new Rectangle() { Left = fontSheetX, Top = fontSheetY, Right = fontSheetX + charWidth, Bottom = fontSheetY + _charHeight };
+
 
                 fontSheetGraphics.DrawImage(charBitmap, fontSheetX, fontSheetY, new System.Drawing.Rectangle(minX, 0, charWidth, _charHeight), System.Drawing.GraphicsUnit.Pixel);
 
@@ -243,10 +244,19 @@ namespace InjectionDll.DxHook.DX11
             return _fontSheetSRV;
         }
 
-        public Rectangle GetCharRect(char c)
+        public Rectangle GetCharRect(char c, string text)
         {
             Debug.Assert(_initialized);
+            int tmp = c - StartChar;
 
+            if (c < StartChar)
+            {
+
+            }
+            if (_charRects.Count() < tmp)
+            {
+
+            }
             return _charRects[c - StartChar];
         }
 

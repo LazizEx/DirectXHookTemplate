@@ -206,7 +206,7 @@ namespace InjectionDll.DxHook
             Device device = (Device)devicePtr;
             try
             {
-
+                this.Config.ShowOverlay = false;
                 lock (_lockRenderTarget)
                 {
                     if (_renderTarget != null)
@@ -235,52 +235,81 @@ namespace InjectionDll.DxHook
         // Used in the overlay
         unsafe int PresentExHook(IntPtr devicePtr, SharpDX.Rectangle* pSourceRect, SharpDX.Rectangle* pDestRect, IntPtr hDestWindowOverride, IntPtr pDirtyRegion, Present dwFlags)
         {
-            _isUsingPresent = true;
-            DeviceEx device = (DeviceEx)devicePtr;
-
-            //DoCaptureRenderTarget(device, "PresentEx");
-
-            //    Region region = new Region(pDirtyRegion);
-            if (pSourceRect == null || *pSourceRect == SharpDX.Rectangle.Empty)
-                device.PresentEx(dwFlags);
-            else
+            try
             {
-                if (hDestWindowOverride != IntPtr.Zero)
-                    device.PresentEx(dwFlags, *pSourceRect, *pDestRect, hDestWindowOverride);
+                _isUsingPresent = true;
+                DeviceEx device = (DeviceEx)devicePtr;
+
+                DoCaptureRenderTarget(device, "PresentEx");
+
+                //    Region region = new Region(pDirtyRegion);
+                if (pSourceRect == null || *pSourceRect == SharpDX.Rectangle.Empty)
+                    device.PresentEx(dwFlags);
                 else
-                    device.PresentEx(dwFlags, *pSourceRect, *pDestRect);
+                {
+                    if (hDestWindowOverride != IntPtr.Zero)
+                        device.PresentEx(dwFlags, *pSourceRect, *pDestRect, hDestWindowOverride);
+                    else
+                        device.PresentEx(dwFlags, *pSourceRect, *pDestRect);
+                }
+                return SharpDX.Result.Ok.Code;
             }
-            return SharpDX.Result.Ok.Code;
+            catch (Exception ex)
+            {
+                DebugMessage(ex.ToString());
+                return SharpDX.Result.Ok.Code;
+            }
+            
         }
 
         unsafe int PresentHook(IntPtr devicePtr, SharpDX.Rectangle* pSourceRect, SharpDX.Rectangle* pDestRect, IntPtr hDestWindowOverride, IntPtr pDirtyRegion)
         {
-            // Example of using delegate to original function pointer to call original method
-            //var original = (Direct3D9Device_PresentDelegate)(Object)Marshal.GetDelegateForFunctionPointer(id3dDeviceFunctionAddresses[(int)Direct3DDevice9FunctionOrdinals.Present], typeof(Direct3D9Device_PresentDelegate));
-            //try
-            //{
-            //    unsafe
-            //    {
-            //        return original(devicePtr, ref pSourceRect, ref pDestRect, hDestWindowOverride, pDirtyRegion);
-            //    }
-            //}
-            //catch { }
-            _isUsingPresent = true;
-
-            Device device = (Device)devicePtr;
-
-            //DoCaptureRenderTarget(device, "PresentHook");
-
-            if (pSourceRect == null || *pSourceRect == SharpDX.Rectangle.Empty)
-                device.Present();
-            else
+            try
             {
-                if (hDestWindowOverride != IntPtr.Zero)
-                    device.Present(*pSourceRect, *pDestRect, hDestWindowOverride);
+                // Example of using delegate to original function pointer to call original method
+                //var original = (Direct3D9Device_PresentDelegate)(Object)Marshal.GetDelegateForFunctionPointer(id3dDeviceFunctionAddresses[(int)Direct3DDevice9FunctionOrdinals.Present], typeof(Direct3D9Device_PresentDelegate));
+                //try
+                //{
+                //    unsafe
+                //    {
+                //        return original(devicePtr, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+                //    }
+                //}
+                //catch { }
+                _isUsingPresent = true;
+
+                Device device = (Device)devicePtr;
+
+                DoCaptureRenderTarget(device, "PresentHook");
+
+                if (pSourceRect == null || *pSourceRect == SharpDX.Rectangle.Empty)
+                {
+                    //device.Present(); // ORIGINAL. Not runing
+                    var original = (Direct3D9Device_PresentDelegate)(Object)Marshal.GetDelegateForFunctionPointer(id3dDeviceFunctionAddresses[(int)Direct3DDevice9FunctionOrdinals.Present], typeof(Direct3D9Device_PresentDelegate));
+                    try
+                    {
+                        unsafe
+                        {
+                            return original(devicePtr, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
+                        }
+                    }
+                    catch { }
+                }
                 else
-                    device.Present(*pSourceRect, *pDestRect);
+                {
+                    if (hDestWindowOverride != IntPtr.Zero)
+                        device.Present(*pSourceRect, *pDestRect, hDestWindowOverride);
+                    else
+                        device.Present(*pSourceRect, *pDestRect);
+                }
+                return SharpDX.Result.Ok.Code;
             }
-            return SharpDX.Result.Ok.Code;
+            catch (Exception ex)
+            {
+                DebugMessage(ex.ToString());
+                return SharpDX.Result.Ok.Code;
+            }
+            
         }
 
         /// <summary>
@@ -291,13 +320,22 @@ namespace InjectionDll.DxHook
         /// <remarks>Remember that this is called many times a second by the Direct3D application - be mindful of memory and performance!</remarks>
         int EndSceneHook(IntPtr devicePtr)
         {
-            Device device = (Device)devicePtr;
+            try
+            {
+                Device device = (Device)devicePtr;
 
-            if (!_isUsingPresent)
-                //DoCaptureRenderTarget(device, "EndSceneHook");
+                if (!_isUsingPresent)
+                    DoCaptureRenderTarget(device, "EndSceneHook");
 
-            device.EndScene();
-            return SharpDX.Result.Ok.Code;
+                    device.EndScene();
+                return SharpDX.Result.Ok.Code;
+            }
+            catch (Exception ex)
+            {
+                DebugMessage(ex.ToString());
+                return SharpDX.Result.Ok.Code;
+            }
+            
         }
 
         void DoCaptureRenderTarget(Device device, string hook)
