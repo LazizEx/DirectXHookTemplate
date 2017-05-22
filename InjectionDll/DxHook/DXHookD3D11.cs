@@ -450,8 +450,10 @@ namespace InjectionDll.DxHook
                         {
                             Elements =
                             {
-                                new Common.TextElement(new System.Drawing.Font("Times New Roman", 22)) { Text = "Test", Location = new System.Drawing.Point(200, 200), Color = System.Drawing.Color.Yellow, AntiAliased = false},
-                                new Common.FramesPerSecond(new System.Drawing.Font("Arial", 12)) { Location = new System.Drawing.Point(5,5), Color = System.Drawing.Color.Red, AntiAliased = true }
+                                //new Common.TextElement(new System.Drawing.Font("Times New Roman", 22)) { Text = "Test", Location = new System.Drawing.Point(200, 200), Color = System.Drawing.Color.Yellow, AntiAliased = false},
+                                new Common.FramesPerSecond(new System.Drawing.Font("Arial", 12)) { Location = new System.Drawing.Point(5,5), Color = System.Drawing.Color.Red, AntiAliased = true },
+                                //new Common.ProcessLoad(new System.Drawing.Font("Arial", 12)){ Location = new System.Drawing.Point(5,20), Color = System.Drawing.Color.Red, AntiAliased = true },
+                                ProcessLoad
                             }
                         });
                         _overlayEngine.Initialise(swapChain);

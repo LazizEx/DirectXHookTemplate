@@ -21,6 +21,7 @@ namespace InjectionDll.DxHook
             this.Timer = new Stopwatch();
             this.Timer.Start();
             this.FPS = new FramesPerSecond();
+            ProcessLoad = new Common.ProcessLoad(new System.Drawing.Font("Arial", 12)) { Location = new System.Drawing.Point(5, 20), Color = System.Drawing.Color.Red, AntiAliased = true };
 
             Interface.DisplayText += InterfaceEventProxy.DisplayTextProxyHandler;
             InterfaceEventProxy.DisplayText += new DisplayTextEvent(InterfaceEventProxy_DisplayText);
@@ -29,6 +30,8 @@ namespace InjectionDll.DxHook
         protected Stopwatch Timer { get; set; }
         protected FramesPerSecond FPS { get; set; }
         protected TextDisplay TextDisplay { get; set; }
+        protected Common.ProcessLoad ProcessLoad { get; set; }
+
 
         ~BaseDXHook()
         {

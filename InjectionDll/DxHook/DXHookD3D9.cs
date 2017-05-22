@@ -431,6 +431,8 @@ namespace InjectionDll.DxHook
                             font.DrawText(null, String.Format("{0:N0} fps", this.FPS.GetFPS()), 5, 5, SharpDX.Color.Red);
                         }
 
+                        font.DrawText(null, this.ProcessLoad.Text, 5, 20, SharpDX.Color.Red);
+
                         if (this.TextDisplay != null && this.TextDisplay.Display)
                         {
                             font.DrawText(null, this.TextDisplay.Text, 5, 25, new SharpDX.ColorBGRA(255, 0, 0, (byte)Math.Round((Math.Abs(1.0f - TextDisplay.Remaining) * 255f))));

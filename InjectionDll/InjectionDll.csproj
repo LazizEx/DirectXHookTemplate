@@ -80,6 +80,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
@@ -97,6 +98,7 @@
     <Compile Include="DxHook\Common\IOverlay.cs" />
     <Compile Include="DxHook\Common\IOverlayElement.cs" />
     <Compile Include="DxHook\Common\Overlay.cs" />
+    <Compile Include="DxHook\Common\ProcessLoad.cs" />
     <Compile Include="DxHook\Common\TextElement.cs" />
     <Compile Include="DxHook\D3D9.cs" />
     <Compile Include="DxHook\DX11\DXFont.cs" />

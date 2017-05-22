@@ -251,11 +251,11 @@ namespace InjectionDll.DxHook.DX11
 
             if (c < StartChar)
             {
-
+                return _charRects[4];
             }
             if (_charRects.Count() < tmp)
             {
-
+                return _charRects[4];
             }
             return _charRects[c - StartChar];
         }
